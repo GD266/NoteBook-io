@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Notebook.io is a quiet, locally saved writing space. Your notes stay in this browser — no account, no cloud, no noise."
+    />
+    <meta name="theme-color" content="#060607" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="mask-icon" href="/favicon.svg" color="#e9e5da" />
+    <title>Notebook.io — A quiet place to write</title>
+    <style>
+      /* Inline so the no-JavaScript message still has a calm place to land. */
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #060607;
+        color: #e9e7e1;
+      }
+      .no-script {
+        display: grid;
+        min-height: 100vh;
+        place-content: center;
+        padding: 32px;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .no-script h1 {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        font-size: clamp(26px, 6vw, 40px);
+        font-weight: 400;
+        letter-spacing: -0.025em;
+        color: #f4f2ec;
+      }
+      .no-script p {
+        max-width: 44ch;
+        margin: 14px auto 0;
+        color: #aaa9a3;
+        line-height: 1.65;
+      }
+    </style>
+    <script>
+      // Resolve the saved theme before first paint so the page never flashes.
+      ;(() => {
+        const root = document.documentElement
+        try {
+          const raw = localStorage.getItem('notebook.io/v1')
+          const parsed = raw ? JSON.parse(raw) : null
+          const preference = parsed && parsed.settings && parsed.settings.theme
+          const theme =
+            preference === 'light' || preference === 'dark'
+              ? preference
+              : preference === 'system'
+                ? window.matchMedia('(prefers-color-scheme: light)').matches
+                  ? 'light'
+                  : 'dark'
+                : 'dark'
+          root.dataset.theme = theme
+          root.style.colorScheme = theme
+          const meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute('content', theme === 'light' ? '#f1efea' : '#060607')
+        } catch {
+          root.dataset.theme = 'dark'
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div class="no-script">
+        <h1>Notebook.io needs JavaScript</h1>
+        <p>
+          This notepad runs entirely in your browser. Enable JavaScript to write and
+          keep notes on this device.
+        </p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
