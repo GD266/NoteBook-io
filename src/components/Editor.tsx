@@ -6,6 +6,8 @@ import type {
   MouseEvent,
 } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { isTauri } from '@tauri-apps/api/core'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { Copy, Download, Keyboard } from 'lucide-react'
 import type { AppSettings, BlockStyle, FormatState, Note } from '../types'
 import { findExternalLinks, normalizeExternalUrl } from '../lib/links'
@@ -380,6 +382,14 @@ export function Editor({
     if (!href) return
 
     event.preventDefault()
+
+    if (isTauri()) {
+      void openUrl(href).catch(() => {
+        window.open(href, '_blank', 'noopener,noreferrer')
+      })
+      return
+    }
+
     window.open(href, '_blank', 'noopener,noreferrer')
   }
 

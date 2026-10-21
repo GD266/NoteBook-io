@@ -1,3 +1,5 @@
+import { isTauri } from '@tauri-apps/api/core'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Note } from './types'
 import { useNotebook } from './hooks/useNotebook'
@@ -71,6 +73,12 @@ function NotebookApp() {
     document.documentElement.style.colorScheme = resolvedTheme
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
     if (meta) meta.content = resolvedTheme === 'dark' ? '#060607' : '#f1efea'
+
+    if (isTauri()) {
+      void getCurrentWindow().setTheme(resolvedTheme).catch(() => {
+        // The web app is unaffected if the native window cannot update its title bar.
+      })
+    }
   }, [resolvedTheme])
 
   const activeNoteHeading = activeNote ? noteTitle(activeNote) : null
@@ -179,7 +187,7 @@ function NotebookApp() {
     setDeleteTargetId(null)
     toast({
       message: 'Note deleted',
-      description: `“${title}” was removed from this browser.`,
+      description: `“${title}” was removed from this device.`,
       tone: 'info',
     })
   }, [deleteNote, deleteTarget, toast])
@@ -212,7 +220,7 @@ function NotebookApp() {
         description:
           error instanceof Error
             ? error.message
-            : 'Clipboard access was blocked by the browser.',
+            : 'Clipboard access was blocked by the system.',
         tone: 'error',
       })
     }
@@ -239,7 +247,7 @@ function NotebookApp() {
     } catch {
       toast({
         message: 'Could not download this note',
-        description: 'Your browser blocked the download. Please try again.',
+        description: 'The download was blocked by the system. Please try again.',
         tone: 'error',
       })
     }
@@ -281,7 +289,7 @@ function NotebookApp() {
         if (saved && activeNote) {
           toast({
             message: 'Note saved',
-            description: 'Stored in this browser.',
+            description: 'Stored on this device.',
             tone: 'success',
             duration: 2600,
           })

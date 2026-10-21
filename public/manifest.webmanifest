@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Notebook.io",
   "short_name": "Notebook.io",
-  "description": "A quiet, lightweight notepad that saves everything locally in your browser.",
+  "description": "A quiet, lightweight notepad that saves everything locally on your device.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/",

@@ -1,7 +1,7 @@
 # Notebook.io
 
-A quiet, lightweight notepad for the browser. Notes save automatically to this
-browser's local storage — there are no accounts, no servers, and no sync.
+A quiet, lightweight notepad for the browser and Windows 11. Notes save
+automatically on your device — there are no accounts, no servers, and no sync.
 
 ## Features
 
@@ -9,8 +9,8 @@ browser's local storage — there are no accounts, no servers, and no sync.
   system theme. Collapse the sidebar and the writing area widens automatically.
 - **Light on resources** — no backdrop blur, decorative animation, or heavy
   effects, so it stays smooth on low-powered devices.
-- **Installable and offline-ready** — install Notebook.io as a standalone app and
-  keep writing after the first load, even without a network connection.
+- **Installable and offline-ready** — install the PWA in a browser, or run the
+  native Windows app. Both work without a network connection.
 - **Automatic local saves** after a short pause, when a note is blurred, and
   before the tab closes. A save indicator in the top bar shows the current state.
 - **Note management** in a responsive, collapsible sidebar: create, switch, search,
@@ -18,7 +18,7 @@ browser's local storage — there are no accounts, no servers, and no sync.
 - **Rich text** via the formatting toolbar and keyboard shortcuts: bold, italic,
   underline, H1/H2/paragraph styles, bulleted lists, and numbered lists.
 - **Clickable links** — pasted http(s) or `www.` URLs become blue links that open
-  in your browser in a new tab.
+  in your default browser.
 - **Live counts** for words and characters, plus relative edit times.
 - **Copy** rich and plain text to the clipboard, or download a note as `.txt`.
 - **Editor preferences** for typeface, text size, line spacing, and spellcheck.
@@ -27,8 +27,16 @@ browser's local storage — there are no accounts, no servers, and no sync.
 
 ## Prerequisites
 
+For the browser version:
+
 - Node.js 20.19+ (or 22.12+)
 - npm 10+
+
+For the Windows desktop version:
+
+- Rust with the `x86_64-pc-windows-msvc` toolchain
+- Visual Studio Build Tools with **Desktop development with C++**
+- WebView2 Runtime (included with Windows 11)
 
 ## Development
 
@@ -37,7 +45,8 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL in your browser.
+Open the printed local URL in your browser. Vite runs on port `1420` so the
+desktop shell can connect to the same URL.
 
 ## Production build
 
@@ -48,18 +57,46 @@ npm run preview
 
 The production assets are written to `dist/`.
 
-## Install as an app
+## Windows desktop app
 
-Notebook.io is a PWA. Build and serve it over HTTPS (or `localhost`), open it in a
-supported browser, and use the browser's **Install app** or **Add to Home Screen**
-action.
+Notebook.io uses Tauri v2 for its Windows 11 build. The desktop app bundles the
+same React interface and stores notes in its own local WebView2 profile.
 
-The production build registers a service worker that precaches the app shell and
-assets after the first visit. The installed app can then open and edit notes
-offline. All notes still live in this browser's local storage.
+```bash
+npm run desktop:dev
+```
 
-The service worker only runs in production builds; `npm run dev` does not enable
-offline caching.
+For a release build and installer:
+
+```bash
+npm run desktop:build
+```
+
+Outputs:
+
+- Executable: `src-tauri/target/release/notebook-io.exe`
+- Installer: `src-tauri/target/release/bundle/nsis/Notebook.io_1.0.0_x64-setup.exe`
+
+The installer is per-user and does not require administrator access. Release
+builds are unsigned, so Windows SmartScreen may warn until the executable is
+code-signed.
+
+Desktop notes are separate from notes saved in a browser or installed PWA. The
+desktop app opens links in the Windows default browser and does not register the
+PWA service worker because its assets are already bundled.
+
+## Install as a PWA
+
+Notebook.io is also a PWA. Build and serve it over HTTPS (or `localhost`), open it
+in a supported browser, and use the browser's **Install app** or **Add to Home
+Screen** action.
+
+The production web build registers a service worker that precaches the app shell
+and assets after the first visit. The installed PWA can then open and edit notes
+offline. All notes still live in that browser's local storage.
+
+The service worker only runs in production web builds. `npm run dev` does not
+enable offline caching, and the Tauri desktop build skips the service worker.
 
 ## Lint
 
@@ -84,9 +121,10 @@ npm run lint
 
 ## Where notes live
 
-Everything is stored under the `notebook.io/v1` key in your browser's
-`localStorage` for this site. Notes are **not** synced across devices or browsers,
-and clearing this site's data in your browser removes them permanently. The
+Everything is stored under the `notebook.io/v1` key in `localStorage`. In a
+browser or installed PWA, that is the site's storage. In the Windows app, it is
+the app's own WebView2 profile. Notes are **not** synced across devices, browsers,
+or the desktop app, and clearing the app's data removes them permanently. The
 Settings panel shows how much local storage your notes use. Download important
 notes if you need a separate copy.
 
@@ -95,4 +133,5 @@ If saved data is ever unreadable, Notebook.io keeps the original payload under a
 
 ## Tech stack
 
-React 19, TypeScript, Vite, Tailwind CSS v4, and Lucide icons.
+React 19, TypeScript, Vite, Tailwind CSS v4, Lucide icons, and Tauri v2 for the
+Windows desktop shell.

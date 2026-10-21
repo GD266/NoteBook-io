@@ -283,7 +283,7 @@ export function Sidebar({
         <HardDrive size={14} strokeWidth={1.8} aria-hidden="true" />
         <div>
           <p>Stored on this device</p>
-          <span>Private to this browser</span>
+          <span>Private to this device</span>
         </div>
       </div>
     </aside>

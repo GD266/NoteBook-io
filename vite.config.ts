@@ -5,4 +5,13 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  clearScreen: false,
+  envPrefix: ['VITE_', 'TAURI_ENV_*'],
+  server: {
+    port: 1420,
+    strictPort: true,
+    watch: {
+      ignored: ['**/src-tauri/**'],
+    },
+  },
 })

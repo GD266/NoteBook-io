@@ -205,8 +205,8 @@ export function SettingsDialog({
         </div>
 
         <p className="settings-hint">
-          Notebook.io saves notes in this browser&apos;s local storage. They don&apos;t
-          sync between devices or browsers, and clearing this site&apos;s data will
+          Notebook.io saves notes in this app&apos;s local storage. They don&apos;t
+          sync between devices or browsers, and clearing this app&apos;s data will
           remove them permanently.
         </p>
 

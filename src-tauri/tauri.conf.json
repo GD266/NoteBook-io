@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Notebook.io",
+  "version": "1.0.0",
+  "identifier": "io.notebook.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Notebook.io",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 720,
+        "minHeight": 500,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "backgroundColor": "#060607",
+        "dragDropEnabled": false,
+        "useHttpsScheme": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "Notebook.io",
+    "category": "Productivity",
+    "shortDescription": "A quiet, locally saved writing space.",
+    "longDescription": "Notebook.io is a quiet, lightweight notepad that saves everything locally on your device. No account, no cloud, no noise.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "startMenuFolder": "Notebook.io"
+      }
+    }
+  }
+}

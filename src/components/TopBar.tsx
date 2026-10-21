@@ -37,14 +37,14 @@ export function TopBar({
         : 'Saved'
 
   const statusTitle = !activeNote
-    ? 'Notes stay in this browser. Nothing is uploaded.'
+    ? 'Notes stay on this device. Nothing is uploaded.'
     : saveStatus === 'error'
-      ? (saveError ?? 'Changes could not be saved to this browser.')
+      ? (saveError ?? 'Changes could not be saved on this device.')
       : saveStatus === 'saving'
-        ? 'Saving changes in this browser…'
+        ? 'Saving changes on this device…'
         : lastSavedAt
-          ? `Saved in this browser at ${formatFullTimestamp(lastSavedAt)}`
-          : 'All changes are saved in this browser.'
+          ? `Saved on this device at ${formatFullTimestamp(lastSavedAt)}`
+          : 'All changes are saved on this device.'
 
   return (
     <header className="topbar panel">

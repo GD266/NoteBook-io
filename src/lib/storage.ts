@@ -134,7 +134,7 @@ export function loadNotebook(): LoadResult {
     return {
       data: createDefaultData(),
       notice:
-        'Local storage is unavailable in this browser. You can keep writing, but notes may not survive a refresh.',
+        'Local storage is unavailable. You can keep writing, but notes may not survive a refresh.',
     }
   }
 
@@ -176,7 +176,7 @@ export function loadNotebook(): LoadResult {
     return {
       data,
       notice: backedUp
-        ? 'Your saved notes could not be read. A backup was kept in this browser while we started a fresh notebook.'
+        ? 'Your saved notes could not be read. A backup was kept on this device while we started a fresh notebook.'
         : 'Your saved notes could not be read, so we started a fresh notebook.',
     }
   }

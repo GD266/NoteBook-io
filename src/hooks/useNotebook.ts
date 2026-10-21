@@ -10,10 +10,10 @@ function describeStorageError(error: unknown): string {
     error instanceof DOMException &&
     (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
   ) {
-    return 'This browser is out of local storage space. Delete a note or free up space, then try again.'
+    return 'This device is out of local storage space. Delete a note or free up space, then try again.'
   }
 
-  return 'Your browser blocked local storage. Your changes are still open here, but they may not survive a reload.'
+  return 'Local storage is blocked. Your changes are still open here, but they may not survive a reload.'
 }
 
 export function useNotebook() {

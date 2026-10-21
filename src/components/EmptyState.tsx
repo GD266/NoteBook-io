@@ -27,7 +27,7 @@ export function EmptyState({
         </h1>
         <p className="empty-copy">
           Capture a thought, sketch a plan, or simply start. Everything you write
-          is kept privately in this browser.
+          is kept privately on this device.
         </p>
 
         <div className="empty-actions">
