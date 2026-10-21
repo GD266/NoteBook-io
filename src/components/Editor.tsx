@@ -27,9 +27,9 @@ const FONT_STACKS: Record<AppSettings['font'], string> = {
 }
 
 const LINE_HEIGHTS: Record<AppSettings['lineSpacing'], string> = {
-  compact: '1.55',
-  balanced: '1.75',
-  airy: '1.95',
+  compact: '1.4',
+  balanced: '1.55',
+  airy: '1.7',
 }
 
 const EMPTY_FORMAT: FormatState = {
