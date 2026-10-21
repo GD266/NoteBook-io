@@ -9,6 +9,8 @@ browser's local storage — there are no accounts, no servers, and no sync.
   system theme. Collapse the sidebar and the writing area widens automatically.
 - **Light on resources** — no backdrop blur, decorative animation, or heavy
   effects, so it stays smooth on low-powered devices.
+- **Installable and offline-ready** — install Notebook.io as a standalone app and
+  keep writing after the first load, even without a network connection.
 - **Automatic local saves** after a short pause, when a note is blurred, and
   before the tab closes. A save indicator in the top bar shows the current state.
 - **Note management** in a responsive, collapsible sidebar: create, switch, search,
@@ -45,6 +47,19 @@ npm run preview
 ```
 
 The production assets are written to `dist/`.
+
+## Install as an app
+
+Notebook.io is a PWA. Build and serve it over HTTPS (or `localhost`), open it in a
+supported browser, and use the browser's **Install app** or **Add to Home Screen**
+action.
+
+The production build registers a service worker that precaches the app shell and
+assets after the first visit. The installed app can then open and edit notes
+offline. All notes still live in this browser's local storage.
+
+The service worker only runs in production builds; `npm run dev` does not enable
+offline caching.
 
 ## Lint
 

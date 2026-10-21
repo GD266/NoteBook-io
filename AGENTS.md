@@ -20,6 +20,7 @@
 - `persistNotebook` deliberately lets storage/quota errors throw; callers translate them into save status and toasts. Don't swallow them there.
 - `src/lib/text.ts` sanitizes editor HTML against a tag allowlist and strips every attribute except validated http(s) links. Sanitize any new HTML before storing or injecting it; never render raw note HTML. URL validation lives in `src/lib/links.ts`.
 - `index.html` has an inline pre-paint script that reads `notebook.io/v1` directly to set the theme. Changing the storage key or shape requires updating that script too.
+- PWA files live in `public/`: `manifest.webmanifest`, `icons/`, and `sw.js`. `src/main.tsx` registers the service worker in production builds only. The SW precaches the shell and hashed `/assets/` files at install, uses network-first navigation, and cache-first assets for offline use. Update `SHELL_URLS`/`CACHE_VERSION` when those paths or caching behavior change.
 
 ## Editor
 
