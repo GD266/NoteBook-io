@@ -12,7 +12,8 @@
 - `npx tsc -b` — typecheck only; there is no `typecheck` script.
 - `npm run lint` — oxlint (`react`, `typescript`, `oxc` plugins).
 - Desktop builds require the Rust MSVC toolchain and Visual Studio C++ build tools; Windows 11 includes WebView2.
-- There are no tests, test runner, CI workflows, ESLint, or Prettier config. Don't invent a test command; verify with typecheck + lint. Use `cargo check` in `src-tauri` or `npm run desktop:build` for Rust/config changes.
+- `.github/workflows/release.yml` publishes a Windows x64 NSIS release when a `v*` tag is pushed. The tag must match the versions in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock`.
+- There is no test runner, ESLint, or Prettier config. Don't invent a test command; verify with typecheck + lint. Use `cargo check` in `src-tauri` or `npm run desktop:build` for Rust/config changes.
 
 ## Architecture
 
@@ -28,6 +29,7 @@
 - The desktop shell lives in `src-tauri/`. `tauri.conf.json` points at `../dist`, uses an NSIS per-user installer, enables `useHttpsScheme`, and disables Tauri drag/drop so the editor's HTML5 text drop still works. `src/lib.rs` registers `tauri-plugin-opener`; `capabilities/default.json` grants `core:default`, `core:window:allow-set-theme`, and `opener:default`. Icons are generated from `public/icons/icon-512.png`.
 - `src/App.tsx` syncs the resolved app theme to the native title bar with `getCurrentWindow().setTheme`. `src/components/Editor.tsx` opens links with the Tauri opener in the desktop app and falls back to `window.open` in browsers. Keep Tauri API calls guarded with `isTauri()` so the web/PWA build continues to work.
 - Tauri's `useHttpsScheme` means desktop `localStorage` lives under the `https://tauri.localhost` origin. Changing that setting moves the storage origin; don't change it without planning for existing desktop notes. Desktop and browser storage are separate.
+- The release workflow uses `tauri-apps/tauri-action@v1` on `windows-latest`, builds with the `x86_64-pc-windows-msvc` target, and lets the action create the GitHub Release and upload the NSIS installer. It uses the workflow `GITHUB_TOKEN` with `contents: write`; don't add a PAT or upload release assets only as workflow artifacts.
 
 ## Editor
 

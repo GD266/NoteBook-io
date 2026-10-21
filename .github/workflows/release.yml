@@ -1,0 +1,91 @@
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build Windows x64 installer
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Verify release version
+        shell: pwsh
+        run: |
+          $config = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          $package = Get-Content package.json -Raw | ConvertFrom-Json
+          $cargoText = Get-Content src-tauri/Cargo.toml -Raw
+          $lockText = Get-Content src-tauri/Cargo.lock -Raw
+
+          if ($cargoText -notmatch '(?m)^version\s*=\s*"([^"]+)"') {
+            throw 'Could not read the version from src-tauri/Cargo.toml'
+          }
+          $cargoVersion = $Matches[1]
+
+          if ($lockText -notmatch '(?m)^name = "notebook-io"\r?\nversion = "([^"]+)"') {
+            throw 'Could not read the notebook-io version from src-tauri/Cargo.lock'
+          }
+          $lockVersion = $Matches[1]
+
+          $expectedTag = "v$($config.version)"
+          if ($env:GITHUB_REF_NAME -ne $expectedTag) {
+            throw "Tag $env:GITHUB_REF_NAME does not match app version $expectedTag"
+          }
+          if ($package.version -ne $config.version) {
+            throw "package.json version $($package.version) does not match tauri.conf.json version $($config.version)"
+          }
+          if ($cargoVersion -ne $config.version) {
+            throw "Cargo.toml version $cargoVersion does not match tauri.conf.json version $($config.version)"
+          }
+          if ($lockVersion -ne $config.version) {
+            throw "Cargo.lock version $lockVersion does not match tauri.conf.json version $($config.version)"
+          }
+
+          Write-Host "Release version verified: $expectedTag"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build and publish Tauri release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Notebook.io v__VERSION__'
+          releaseBody: |
+            Download the `*-setup.exe` installer below for Windows 11 (x64).
+
+            The installer is per-user and does not require administrator access. Builds are unsigned, so Windows SmartScreen may show a warning.
+          releaseDraft: false
+          prerelease: false
+          uploadUpdaterJson: false
+          uploadWorkflowArtifacts: false
+          args: --target x86_64-pc-windows-msvc

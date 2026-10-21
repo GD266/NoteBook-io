@@ -25,6 +25,15 @@ automatically on your device — there are no accounts, no servers, and no sync.
 - **Accessible controls** with focus management, dialogs, keyboard navigation,
   reduced-motion support, and a skip link.
 
+## Download for Windows
+
+Download the latest Windows x64 installer from the
+[GitHub Releases page](https://github.com/GD266/NoteBook-io/releases/latest).
+
+The release includes a standard NSIS `.exe` setup installer. It installs
+per-user and does not require administrator access. Builds are unsigned, so
+Windows SmartScreen may show a warning.
+
 ## Prerequisites
 
 For the browser version:
@@ -75,7 +84,7 @@ npm run desktop:build
 Outputs:
 
 - Executable: `src-tauri/target/release/notebook-io.exe`
-- Installer: `src-tauri/target/release/bundle/nsis/Notebook.io_1.0.0_x64-setup.exe`
+- Installer: `src-tauri/target/release/bundle/nsis/Notebook.io_<version>_x64-setup.exe`
 
 The installer is per-user and does not require administrator access. Release
 builds are unsigned, so Windows SmartScreen may warn until the executable is
@@ -84,6 +93,46 @@ code-signed.
 Desktop notes are separate from notes saved in a browser or installed PWA. The
 desktop app opens links in the Windows default browser and does not register the
 PWA service worker because its assets are already bundled.
+
+## Releasing
+
+Releases are built and published by
+[`.github/workflows/release.yml`](.github/workflows/release.yml) when a `v*` tag
+is pushed. The workflow builds the Windows x64 installer and attaches it to the
+GitHub Release using the automatically provided `GITHUB_TOKEN`; no extra
+secrets are required.
+
+Keep the version in `package.json`, `src-tauri/tauri.conf.json`,
+`src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock` in sync. The workflow rejects
+a tag that does not match the app version.
+
+For the first release, commit the release workflow and tag `v1.0.0`:
+
+```bash
+git add .
+git commit -m "Release v1.0.0"
+git push origin main
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+For later releases, bump the version, refresh `Cargo.lock`, and tag the release
+commit:
+
+```bash
+npm version patch --no-git-tag-version
+# Also update src-tauri/tauri.conf.json and src-tauri/Cargo.toml.
+npm run desktop:build
+git add package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git commit -m "Release v1.0.1"
+git push origin main
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+Watch the **Actions** tab for the workflow result. A successful run publishes
+the release and its `*-setup.exe` asset at
+`https://github.com/GD266/NoteBook-io/releases`.
 
 ## Install as a PWA
 
