@@ -29,21 +29,18 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![finish_startup])
         .setup(|app| {
+            // The window-state plugin has restored the saved bounds by now.
+            // Show the main window immediately, behind the topmost native
+            // splash, so WebView2 is not kept hidden while it initializes.
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+            }
+
             #[cfg(windows)]
             {
                 if splash::is_open() {
+                    splash::focus();
                     splash::watchdog(app.handle().clone());
-                } else if let Some(window) = app.get_webview_window("main") {
-                    // The native splash could not be created; never leave the
-                    // app without a visible window.
-                    let _ = window.show();
-                }
-            }
-
-            #[cfg(not(windows))]
-            {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
                 }
             }
 

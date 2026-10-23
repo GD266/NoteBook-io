@@ -30,10 +30,10 @@ use windows_sys::Win32::UI::HiDpi::{
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetClientRect, GetMessageW,
     GetSystemMetrics, IsWindow, LoadCursorW, PostMessageW, PostQuitMessage, RegisterClassW,
-    SetLayeredWindowAttributes, SetTimer, ShowWindow, TranslateMessage, CS_DROPSHADOW, CS_HREDRAW,
-    CS_VREDRAW, IDC_ARROW, LWA_ALPHA, MSG, SM_CXSCREEN, SM_CYSCREEN, SW_SHOWNOACTIVATE, WM_CLOSE,
-    WM_DESTROY, WM_ERASEBKGND, WM_PAINT, WM_TIMER, WNDCLASSW, WS_EX_LAYERED, WS_EX_TOOLWINDOW,
-    WS_EX_TOPMOST, WS_POPUP,
+    SetForegroundWindow, SetLayeredWindowAttributes, SetTimer, ShowWindow, TranslateMessage,
+    CS_DROPSHADOW, CS_HREDRAW, CS_VREDRAW, IDC_ARROW, LWA_ALPHA, MSG, SM_CXSCREEN, SM_CYSCREEN,
+    SW_SHOW, WM_CLOSE, WM_DESTROY, WM_ERASEBKGND, WM_PAINT, WM_TIMER, WNDCLASSW, WS_EX_LAYERED,
+    WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
 };
 
 const LOGICAL_WIDTH: i32 = 520;
@@ -141,7 +141,8 @@ unsafe fn create_splash_window() -> bool {
     SPLASH_HWND.store(hwnd as isize, Ordering::SeqCst);
     START.get_or_init(Instant::now);
     SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
-    ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+    ShowWindow(hwnd, SW_SHOW);
+    SetForegroundWindow(hwnd);
     UpdateWindow(hwnd);
     SetTimer(hwnd, 1, 16, None);
     true
@@ -168,6 +169,16 @@ pub fn close() {
 pub fn is_open() -> bool {
     let hwnd = SPLASH_HWND.load(Ordering::SeqCst) as HWND;
     !hwnd.is_null() && unsafe { IsWindow(hwnd) != 0 }
+}
+
+/// Keep the splash above the main window while the app finishes loading.
+pub fn focus() {
+    let hwnd = SPLASH_HWND.load(Ordering::SeqCst) as HWND;
+    if !hwnd.is_null() {
+        unsafe {
+            SetForegroundWindow(hwnd);
+        }
+    }
 }
 
 /// If the web app never reports ready, do not leave the user with only a
