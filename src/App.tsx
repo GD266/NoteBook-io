@@ -7,6 +7,7 @@ import { useToast } from './hooks/useToast'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { useNow } from './hooks/useNow'
 import { htmlToPlainText } from './lib/text'
+import { dismissSplash } from './lib/splash'
 import { DEFAULT_SETTINGS, estimateStorageBytes } from './lib/storage'
 import {
   copyNoteToClipboard,
@@ -67,6 +68,10 @@ function NotebookApp() {
     () => (settingsOpen ? estimateStorageBytes(notes) : 0),
     [settingsOpen, notes],
   )
+
+  useEffect(() => {
+    dismissSplash()
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolvedTheme

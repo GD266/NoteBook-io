@@ -51,6 +51,160 @@
         color: #aaa9a3;
         line-height: 1.65;
       }
+
+      /*
+       * Startup splash. Inline and painted before the app bundle arrives so the
+       * window never shows an empty frame. Kept to cheap opacity/transform
+       * animations that stop once the app is ready.
+       */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: grid;
+        place-items: center;
+        background: #060607;
+        color: #e9e7e1;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
+          "Segoe UI", sans-serif;
+        transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: opacity;
+      }
+
+      html[data-theme="light"] #splash {
+        background: #f0eee9;
+        color: #252528;
+      }
+
+      #splash.is-leaving {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .splash-inner {
+        display: grid;
+        justify-items: center;
+        transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      #splash.is-leaving .splash-inner {
+        transform: translateY(-5px) scale(0.985);
+      }
+
+      .splash-mark {
+        display: grid;
+        width: 64px;
+        height: 64px;
+        place-items: center;
+        color: #171715;
+        background: linear-gradient(145deg, #f6f3eb, #d9d2c3);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 18px;
+        animation: splash-mark-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      html[data-theme="light"] .splash-mark {
+        color: #f5f1e7;
+        background: linear-gradient(145deg, #232326, #101012);
+        border-color: rgba(22, 22, 26, 0.14);
+      }
+
+      .splash-mark svg {
+        width: 31px;
+        height: 31px;
+      }
+
+      .splash-word {
+        margin-top: 18px;
+        color: inherit;
+        font-family: "New York", "Iowan Old Style", "Palatino Linotype", Georgia,
+          serif;
+        font-size: 21px;
+        font-weight: 400;
+        letter-spacing: -0.015em;
+        animation: splash-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) 40ms both;
+      }
+
+      .splash-word span {
+        color: #85858b;
+      }
+
+      html[data-theme="light"] .splash-word span {
+        color: #77787e;
+      }
+
+      .splash-rule {
+        width: 54px;
+        height: 1px;
+        margin-top: 14px;
+        background: rgba(255, 255, 255, 0.16);
+        transform-origin: center;
+        animation: splash-rule-in 280ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both;
+      }
+
+      html[data-theme="light"] .splash-rule {
+        background: rgba(22, 22, 26, 0.16);
+      }
+
+      .splash-caption {
+        margin-top: 12px;
+        color: #85858b;
+        font-size: 11px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        animation: splash-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
+      }
+
+      html[data-theme="light"] .splash-caption {
+        color: #77787e;
+      }
+
+      @keyframes splash-mark-in {
+        from {
+          opacity: 0;
+          transform: scale(0.86) rotate(-6deg);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+      }
+
+      @keyframes splash-rise {
+        from {
+          opacity: 0;
+          transform: translateY(7px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes splash-rule-in {
+        from {
+          opacity: 0;
+          transform: scaleX(0.2);
+        }
+        to {
+          opacity: 1;
+          transform: scaleX(1);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #splash,
+        .splash-inner {
+          transition: none;
+        }
+
+        .splash-mark,
+        .splash-word,
+        .splash-rule,
+        .splash-caption {
+          animation: none;
+        }
+      }
     </style>
     <script>
       // Resolve the saved theme before first paint so the page never flashes.
@@ -79,7 +233,30 @@
     </script>
   </head>
   <body>
+    <div id="splash" aria-hidden="true">
+      <div class="splash-inner">
+        <span class="splash-mark">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z" />
+            <path d="M16 8 2 22" />
+            <path d="M17.5 15H9" />
+          </svg>
+        </span>
+        <span class="splash-word">Notebook<span>.io</span></span>
+        <span class="splash-rule" aria-hidden="true"></span>
+        <span class="splash-caption">A quiet place to write</span>
+      </div>
+    </div>
+
     <div id="root"></div>
+
     <noscript>
       <div class="no-script">
         <h1>Notebook.io needs JavaScript</h1>

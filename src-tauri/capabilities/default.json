@@ -3,5 +3,11 @@
   "identifier": "default",
   "description": "Default capabilities for the Notebook.io main window.",
   "windows": ["main"],
-  "permissions": ["core:default", "core:window:allow-set-theme", "opener:default"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-show",
+    "core:window:allow-set-theme",
+    "window-state:default",
+    "opener:default"
+  ]
 }
