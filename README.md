@@ -21,6 +21,9 @@ automatically on your device — there are no accounts, no servers, and no sync.
   in your default browser.
 - **Live counts** for words and characters, plus relative edit times.
 - **Copy** rich and plain text to the clipboard, or download a note as `.txt`.
+- **Open `.txt` files** by double-clicking them on Windows. The text opens in a
+  new note, and an already-running Notebook.io window receives the file instead
+  of opening a second copy.
 - **Editor preferences** for typeface, text size, line spacing, and spellcheck.
 - **Accessible controls** with focus management, dialogs, keyboard navigation,
   reduced-motion support, and a skip link.

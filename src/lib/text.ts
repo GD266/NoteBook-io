@@ -167,6 +167,36 @@ export function sanitizeNoteHtml(html: string): string {
   }
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/**
+ * Converts imported plain text into the small HTML subset the editor stores.
+ * Every line becomes its own block so blank lines and line breaks survive the
+ * round trip; leading and repeated spaces are kept with non-breaking spaces.
+ */
+export function plainTextToHtml(text: string): string {
+  const normalized = text.replace(/\r\n?/g, '\n').split('\u0000').join('')
+  if (!normalized) return ''
+
+  return normalized
+    .split('\n')
+    .map((line) => {
+      const escaped = escapeHtml(line)
+        .replace(/\t/g, '    ')
+        .replace(/^ +/, (spaces) => '&nbsp;'.repeat(spaces.length))
+        .replace(/ {2,}/g, (spaces) => '&nbsp;'.repeat(spaces.length))
+      return `<div>${escaped || '<br>'}</div>`
+    })
+    .join('')
+}
+
 interface PlainTextOptions {
   /** Adds bullets and numbers when copying/downloading lists. */
   listMarkers?: boolean

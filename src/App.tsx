@@ -1,4 +1,5 @@
 import { isTauri } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Note } from './types'
@@ -6,7 +7,8 @@ import { useNotebook } from './hooks/useNotebook'
 import { useToast } from './hooks/useToast'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { useNow } from './hooks/useNow'
-import { htmlToPlainText } from './lib/text'
+import { readTextFile, takePendingTextFiles } from './lib/files'
+import { htmlToPlainText, plainTextToHtml } from './lib/text'
 import { dismissSplash } from './lib/splash'
 import { DEFAULT_SETTINGS, estimateStorageBytes } from './lib/storage'
 import {
@@ -23,6 +25,23 @@ import { ShortcutsDialog } from './components/ShortcutsDialog'
 import { DeleteNoteDialog } from './components/DeleteNoteDialog'
 import { ToastProvider } from './components/ToastProvider'
 
+function nextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      resolve()
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(finish)
+    })
+    // Keep startup moving even if the window is occluded and frames pause.
+    window.setTimeout(finish, 80)
+  })
+}
+
 function NotebookApp() {
   const { toast } = useToast()
   const {
@@ -34,6 +53,7 @@ function NotebookApp() {
     saveError,
     loadNotice,
     createNote,
+    importNote,
     selectNote,
     updateContent,
     updateTitle,
@@ -56,6 +76,39 @@ function NotebookApp() {
   const loadNoticeShown = useRef(false)
   const previousSaveError = useRef<string | null>(null)
 
+  const openPendingTextFiles = useCallback(async (): Promise<boolean> => {
+    let paths: string[]
+    try {
+      paths = await takePendingTextFiles()
+    } catch {
+      return false
+    }
+
+    let opened = false
+    for (const path of paths) {
+      try {
+        const file = await readTextFile(path)
+        importNote(file.name, plainTextToHtml(file.content))
+        opened = true
+        toast({
+          message: 'Text file opened',
+          description: file.fileName,
+          tone: 'success',
+          duration: 2400,
+        })
+      } catch (error) {
+        toast({
+          message: 'Could not open text file',
+          description: error instanceof Error ? error.message : String(error),
+          tone: 'error',
+          duration: 8000,
+        })
+      }
+    }
+
+    return opened
+  }, [importNote, toast])
+
   const resolvedTheme =
     settings.theme === 'system' ? (prefersDark ? 'dark' : 'light') : settings.theme
   const dialogOpen = settingsOpen || shortcutsOpen || deleteTargetId !== null
@@ -70,8 +123,43 @@ function NotebookApp() {
   )
 
   useEffect(() => {
-    dismissSplash()
-  }, [])
+    let disposed = false
+    let unlisten: (() => void) | undefined
+
+    const handleOpenRequest = () => {
+      void openPendingTextFiles()
+    }
+
+    const prepareStartup = async () => {
+      if (isTauri()) {
+        try {
+          unlisten = await listen('open-text-file', handleOpenRequest)
+        } catch {
+          // The desktop event bridge is unavailable; startup files still work.
+        }
+      }
+
+      if (disposed) {
+        unlisten?.()
+        return
+      }
+
+      await openPendingTextFiles()
+      if (disposed) return
+
+      // Give an imported note a frame to paint before the native splash closes.
+      await nextPaint()
+      if (disposed) return
+      dismissSplash()
+    }
+
+    void prepareStartup()
+
+    return () => {
+      disposed = true
+      unlisten?.()
+    }
+  }, [openPendingTextFiles])
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolvedTheme

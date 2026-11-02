@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AppSettings, Note, NotebookData, SaveStatus } from '../types'
 import { loadNotebook, persistNotebook } from '../lib/storage'
+import { sanitizeNoteHtml } from '../lib/text'
 import { createId, sortNotes } from '../lib/utils'
 
 const SAVE_DELAY_MS = 600
@@ -87,6 +88,53 @@ export function useNotebook() {
     writeSnapshot(next)
     return note.id
   }, [clearSaveTimer, commitData, writeSnapshot])
+
+  const importNote = useCallback(
+    (title: string, content: string): string => {
+      clearSaveTimer()
+      const current = dataRef.current
+      const safeTitle = title.trim().slice(0, 120) || 'Untitled note'
+      const safeContent = sanitizeNoteHtml(content)
+
+      // Reopening an unchanged file should reveal the same note instead of
+      // creating a duplicate. Edited notes stay intact because the content no
+      // longer matches the file.
+      const existing = current.notes.find(
+        (note) => note.title === safeTitle && note.content === safeContent,
+      )
+      if (existing) {
+        if (current.activeNoteId !== existing.id) {
+          const next: NotebookData = { ...current, activeNoteId: existing.id }
+          commitData(next)
+          writeSnapshot(next)
+        } else {
+          // Flush any pending edit that the cleared timer would have saved.
+          writeSnapshot(current)
+        }
+        return existing.id
+      }
+
+      const now = Date.now()
+      const note: Note = {
+        id: createId(),
+        title: safeTitle,
+        content: safeContent,
+        createdAt: now,
+        updatedAt: now,
+      }
+
+      const next: NotebookData = {
+        ...current,
+        notes: sortNotes([note, ...current.notes]),
+        activeNoteId: note.id,
+      }
+
+      commitData(next)
+      writeSnapshot(next)
+      return note.id
+    },
+    [clearSaveTimer, commitData, writeSnapshot],
+  )
 
   const selectNote = useCallback(
     (id: string) => {
@@ -236,6 +284,7 @@ export function useNotebook() {
     saveError,
     loadNotice: initialLoad.notice,
     createNote,
+    importNote,
     selectNote,
     updateContent,
     updateTitle,

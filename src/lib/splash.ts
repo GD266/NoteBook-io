@@ -3,10 +3,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 
 // The inline splash is only used by the web/PWA build. The desktop app has a
 // native splash that is already on screen before WebView2 loads, so it only
-// needs to reveal the window and let that native splash fade out.
-const MIN_VISIBLE_MS = 260
-const FADE_MS = 160
-
+// needs to reveal the window and dismiss that native splash.
 function afterFirstPaint(callback: () => void): void {
   window.requestAnimationFrame(() => {
     window.requestAnimationFrame(callback)
@@ -40,9 +37,6 @@ export function dismissSplash(): void {
   }
 
   afterFirstPaint(() => {
-    window.setTimeout(() => {
-      splash.classList.add('is-leaving')
-      window.setTimeout(() => splash.remove(), FADE_MS)
-    }, MIN_VISIBLE_MS)
+    splash.remove()
   })
 }
