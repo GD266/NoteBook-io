@@ -6,15 +6,19 @@ automatically on your device — there are no accounts, no servers, and no sync.
 ## Features
 
 - **Distraction-free editing** with a clean, flat interface in light, dark, or
-  system theme. Collapse the sidebar and the writing area widens automatically.
+  system theme. The writing area gets the whole window — there is no side panel
+  to hide.
+- **Instant startup** — no splash screen or intro animation on web or desktop;
+  the window appears as soon as it is launched.
 - **Light on resources** — no backdrop blur, decorative animation, or heavy
   effects, so it stays smooth on low-powered devices.
 - **Installable and offline-ready** — install the PWA in a browser, or run the
   native Windows app. Both work without a network connection.
 - **Automatic local saves** after a short pause, when a note is blurred, and
   before the tab closes. A save indicator in the top bar shows the current state.
-- **Note management** in a responsive, collapsible sidebar: create, switch, search,
-  rename, and delete with confirmation.
+- **Note management** in a top action bar (Windows 11 Notepad style): a prominent
+  New note button, search, and horizontally scrolling note tabs for switching,
+  renaming, and deleting — deletes happen instantly, with no confirmation dialog.
 - **Rich text** via the formatting toolbar and keyboard shortcuts: bold, italic,
   underline, H1/H2/paragraph styles, bulleted lists, and numbered lists.
 - **Clickable links** — pasted http(s) or `www.` URLs become blue links that open

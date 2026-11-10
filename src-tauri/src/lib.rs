@@ -5,9 +5,6 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager, WindowEvent};
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
-#[cfg(windows)]
-pub mod splash;
-
 const MAX_TEXT_FILE_BYTES: u64 = 10 * 1024 * 1024;
 
 /// Files handed to the app by Windows before the webview is ready. The
@@ -97,17 +94,6 @@ fn decode_text(bytes: &[u8]) -> String {
 }
 
 #[tauri::command]
-fn finish_startup(app: tauri::AppHandle) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.show();
-        let _ = window.set_focus();
-    }
-
-    #[cfg(windows)]
-    splash::close();
-}
-
-#[tauri::command]
 fn take_pending_files() -> Vec<String> {
     let Ok(mut pending) = PENDING_FILES.lock() else {
         return Vec::new();
@@ -178,30 +164,18 @@ pub fn run() {
         .plugin(
             tauri_plugin_window_state::Builder::default()
                 // The main window starts hidden so the plugin can restore its
-                // size and position before it is shown. Never persist or
-                // restore visibility here.
+                // size and position before the first frame is shown. Never
+                // persist or restore visibility here.
                 .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![
-            finish_startup,
-            take_pending_files,
-            read_text_file
-        ])
+        .invoke_handler(tauri::generate_handler![take_pending_files, read_text_file])
         .setup(|app| {
-            // The window-state plugin has restored the saved bounds by now.
-            // Show the main window immediately, behind the topmost native
-            // splash, so WebView2 is not kept hidden while it initializes.
+            // The window-state plugin has restored the saved bounds by now, so
+            // the window can appear immediately — no splash, no artificial
+            // delay — while WebView2 finishes loading in the background.
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
-            }
-
-            #[cfg(windows)]
-            {
-                if splash::is_open() {
-                    splash::focus();
-                    splash::watchdog(app.handle().clone());
-                }
             }
 
             Ok(())

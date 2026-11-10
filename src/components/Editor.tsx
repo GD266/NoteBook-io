@@ -80,6 +80,20 @@ function readFormatState(): FormatState {
   }
 }
 
+function sameFormatState(a: FormatState, b: FormatState): boolean {
+  return (
+    a.bold === b.bold &&
+    a.italic === b.italic &&
+    a.underline === b.underline &&
+    a.bulletList === b.bulletList &&
+    a.numberedList === b.numberedList &&
+    a.block === b.block
+  )
+}
+
+/** Word counts settle shortly after typing instead of on every keystroke. */
+const STATS_DELAY_MS = 180
+
 interface EditorProps {
   note: Note
   settings: AppSettings
@@ -115,12 +129,13 @@ export function Editor({
   const titleRef = useRef<HTMLInputElement>(null)
   const savedRangeRef = useRef<Range | null>(null)
   const initialContentRef = useRef(note.content)
+  const statsTimerRef = useRef<number | null>(null)
 
   const [plainText, setPlainText] = useState(() => htmlToPlainText(note.content))
+  const [empty, setEmpty] = useState(() => plainText.trim() === '')
   const [formatState, setFormatState] = useState<FormatState>(EMPTY_FORMAT)
 
   const stats = useMemo(() => getTextStats(plainText), [plainText])
-  const isEmpty = plainText.length === 0
 
   const editorStyle = {
     '--editor-font': FONT_STACKS[settings.font],
@@ -132,7 +147,19 @@ export function Editor({
     const editor = editorRef.current
     if (!editor) return
     const html = editor.innerHTML
-    setPlainText(htmlToPlainText(html))
+
+    // Emptiness only needs a native text check; it must stay instant so the
+    // placeholder reacts on the same keystroke.
+    setEmpty(!editor.textContent?.trim())
+
+    // Word and character counts are derived from the whole note, so they are
+    // recomputed after a short pause rather than on every keystroke.
+    if (statsTimerRef.current !== null) window.clearTimeout(statsTimerRef.current)
+    statsTimerRef.current = window.setTimeout(() => {
+      statsTimerRef.current = null
+      setPlainText(htmlToPlainText(html))
+    }, STATS_DELAY_MS)
+
     onContentChange(html)
   }, [onContentChange])
 
@@ -229,12 +256,25 @@ export function Editor({
       }
 
       rememberSelection()
-      setFormatState(readFormatState())
+      // The browser fires selectionchange on every caret move and keystroke;
+      // keep the toolbar from re-rendering unless a flag really changed.
+      const next = readFormatState()
+      setFormatState((current) => (sameFormatState(current, next) ? current : next))
     }
 
     document.addEventListener('selectionchange', handleSelectionChange)
     return () => document.removeEventListener('selectionchange', handleSelectionChange)
   }, [rememberSelection])
+
+  useEffect(
+    () => () => {
+      if (statsTimerRef.current !== null) {
+        window.clearTimeout(statsTimerRef.current)
+        statsTimerRef.current = null
+      }
+    },
+    [],
+  )
 
   const runCommand = useCallback(
     (command: string, value?: string) => {
@@ -472,7 +512,7 @@ export function Editor({
               onDragOver={(event) => event.preventDefault()}
               onBlur={onFlush}
             />
-            {isEmpty ? (
+            {empty ? (
               <div className="editor-placeholder" aria-hidden="true">
                 Begin writing…
               </div>

@@ -9,7 +9,6 @@ import { useMediaQuery } from './hooks/useMediaQuery'
 import { useNow } from './hooks/useNow'
 import { readTextFile, takePendingTextFiles } from './lib/files'
 import { htmlToPlainText, plainTextToHtml } from './lib/text'
-import { dismissSplash } from './lib/splash'
 import { DEFAULT_SETTINGS, estimateStorageBytes } from './lib/storage'
 import {
   copyNoteToClipboard,
@@ -17,30 +16,12 @@ import {
   noteTitle,
 } from './lib/utils'
 import { TopBar } from './components/TopBar'
-import { Sidebar } from './components/Sidebar'
+import { TopNotesPanel } from './components/TopNotesPanel'
 import { Editor } from './components/Editor'
 import { EmptyState } from './components/EmptyState'
 import { SettingsDialog } from './components/SettingsDialog'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
-import { DeleteNoteDialog } from './components/DeleteNoteDialog'
 import { ToastProvider } from './components/ToastProvider'
-
-function nextPaint(): Promise<void> {
-  return new Promise((resolve) => {
-    let settled = false
-    const finish = () => {
-      if (settled) return
-      settled = true
-      resolve()
-    }
-
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(finish)
-    })
-    // Keep startup moving even if the window is occluded and frames pause.
-    window.setTimeout(finish, 80)
-  })
-}
 
 function NotebookApp() {
   const { toast } = useToast()
@@ -63,14 +44,10 @@ function NotebookApp() {
   } = useNotebook()
 
   const now = useNow()
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [focusTitleNoteId, setFocusTitleNoteId] = useState<string | null>(null)
 
   const loadNoticeShown = useRef(false)
@@ -111,8 +88,7 @@ function NotebookApp() {
 
   const resolvedTheme =
     settings.theme === 'system' ? (prefersDark ? 'dark' : 'light') : settings.theme
-  const dialogOpen = settingsOpen || shortcutsOpen || deleteTargetId !== null
-  const deleteTarget = notes.find((note) => note.id === deleteTargetId) ?? null
+  const dialogOpen = settingsOpen || shortcutsOpen
   const autoFocusTitle = Boolean(
     activeNote && focusTitleNoteId === activeNote.id,
   )
@@ -144,13 +120,8 @@ function NotebookApp() {
         return
       }
 
+      // Files handed over by the OS open as soon as the app mounts.
       await openPendingTextFiles()
-      if (disposed) return
-
-      // Give an imported note a frame to paint before the native splash closes.
-      await nextPaint()
-      if (disposed) return
-      dismissSplash()
     }
 
     void prepareStartup()
@@ -181,16 +152,6 @@ function NotebookApp() {
       ? `${activeNoteHeading} — Notebook.io`
       : 'Notebook.io — A quiet place to write'
   }, [activeNoteHeading])
-
-  useEffect(() => {
-    const desktopQuery = window.matchMedia('(min-width: 1024px)')
-    const handleBreakpointChange = (event: MediaQueryListEvent) => {
-      if (event.matches) setSidebarOpen(false)
-    }
-
-    desktopQuery.addEventListener('change', handleBreakpointChange)
-    return () => desktopQuery.removeEventListener('change', handleBreakpointChange)
-  }, [])
 
   useEffect(() => {
     if (!loadNotice || loadNoticeShown.current) return
@@ -224,37 +185,23 @@ function NotebookApp() {
   }, [flushSave, saveError, toast])
 
   const focusSearch = useCallback(() => {
-    setSidebarOpen(true)
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const input = document.getElementById('notes-search')
-        if (input instanceof HTMLInputElement) {
-          input.focus()
-          input.select()
-        }
-      })
-    })
+    // The search field lives in the always-visible top bar, so it can be
+    // focused immediately without waiting for a frame.
+    const input = document.getElementById('notes-search')
+    if (input instanceof HTMLInputElement) {
+      input.focus()
+      input.select()
+    }
   }, [])
 
-  const handleToggleSidebar = useCallback(() => {
-    if (isDesktop) {
-      setSidebarCollapsed((collapsed) => !collapsed)
-    } else {
-      setSidebarOpen((open) => !open)
-    }
-  }, [isDesktop])
-
   const handleCreateNote = useCallback(() => {
-    const id = createNote()
-    setFocusTitleNoteId(id)
-    setSidebarOpen(false)
+    setFocusTitleNoteId(createNote())
   }, [createNote])
 
   const handleSelectNote = useCallback(
     (id: string) => {
       selectNote(id)
       setFocusTitleNoteId(null)
-      setSidebarOpen(false)
     },
     [selectNote],
   )
@@ -263,27 +210,25 @@ function NotebookApp() {
     (id: string) => {
       selectNote(id)
       setFocusTitleNoteId(id)
-      setSidebarOpen(false)
     },
     [selectNote],
   )
 
-  const handleRequestDelete = useCallback((note: Note) => {
-    setDeleteTargetId(note.id)
-    setSidebarOpen(false)
-  }, [])
-
-  const handleConfirmDelete = useCallback(() => {
-    if (!deleteTarget) return
-    const title = noteTitle(deleteTarget)
-    deleteNote(deleteTarget.id)
-    setDeleteTargetId(null)
-    toast({
-      message: 'Note deleted',
-      description: `“${title}” was removed from this device.`,
-      tone: 'info',
-    })
-  }, [deleteNote, deleteTarget, toast])
+  // Deletion is immediate: no confirmation dialog, and only the clicked note
+  // is removed from the notebook.
+  const handleDeleteNote = useCallback(
+    (note: Note) => {
+      const title = noteTitle(note)
+      deleteNote(note.id)
+      toast({
+        message: 'Note deleted',
+        description: `“${title}” was removed from this device.`,
+        tone: 'info',
+        duration: 3200,
+      })
+    },
+    [deleteNote, toast],
+  )
 
   const handleToggleTheme = useCallback(() => {
     updateSettings({ theme: resolvedTheme === 'dark' ? 'light' : 'dark' })
@@ -348,12 +293,10 @@ function NotebookApp() {
 
   const handleOpenSettings = useCallback(() => {
     setSettingsOpen(true)
-    setSidebarOpen(false)
   }, [])
 
   const handleOpenShortcuts = useCallback(() => {
     setShortcutsOpen(true)
-    setSidebarOpen(false)
   }, [])
 
   const handleResetEditorPreferences = useCallback(() => {
@@ -426,72 +369,53 @@ function NotebookApp() {
         Skip to content
       </a>
 
-      <div
-        className="app-shell"
-        data-sidebar-collapsed={isDesktop && sidebarCollapsed ? 'true' : undefined}
-      >
+      <div className="app-shell">
         <TopBar
-          activeNote={activeNote}
+          hasNote={activeNote !== null}
           saveStatus={saveStatus}
           saveError={saveError}
           lastSavedAt={lastSavedAt}
           resolvedTheme={resolvedTheme}
-          sidebarExpanded={isDesktop ? !sidebarCollapsed : sidebarOpen}
-          onToggleSidebar={handleToggleSidebar}
           onToggleTheme={handleToggleTheme}
           onOpenSettings={handleOpenSettings}
         />
 
-        <div className="app-body">
-          <Sidebar
-            notes={notes}
-            activeNoteId={activeNote?.id ?? null}
-            sidebarOpen={sidebarOpen}
-            collapsed={sidebarCollapsed}
-            isDesktop={isDesktop}
-            now={now}
-            onCloseSidebar={() => setSidebarOpen(false)}
-            onCreateNote={handleCreateNote}
-            onSelectNote={handleSelectNote}
-            onRenameNote={handleRenameNote}
-            onRequestDelete={handleRequestDelete}
-          />
+        <TopNotesPanel
+          notes={notes}
+          activeNoteId={activeNote?.id ?? null}
+          now={now}
+          onCreateNote={handleCreateNote}
+          onSelectNote={handleSelectNote}
+          onRenameNote={handleRenameNote}
+          onDeleteNote={handleDeleteNote}
+        />
 
-          {sidebarOpen && !isDesktop ? (
-            <div
-              className="sidebar-backdrop"
-              onClick={() => setSidebarOpen(false)}
-              aria-hidden="true"
-            />
-          ) : null}
-
-          <main id="main-content" className="main-area" tabIndex={-1}>
-            <section className="editor-panel panel" aria-label="Notebook editor">
-              {activeNote ? (
-                <Editor
-                  key={activeNote.id}
-                  note={activeNote}
-                  settings={settings}
-                  now={now}
-                  autoFocusTitle={autoFocusTitle}
-                  onTitleFocused={() => setFocusTitleNoteId(null)}
-                  onTitleChange={updateTitle}
-                  onContentChange={updateContent}
-                  onFlush={flushSave}
-                  onCopy={handleCopy}
-                  onDownload={handleDownload}
-                  onOpenShortcuts={handleOpenShortcuts}
-                />
-              ) : (
-                <EmptyState
-                  hasNotes={notes.length > 0}
-                  onCreateNote={handleCreateNote}
-                  onOpenShortcuts={handleOpenShortcuts}
-                />
-              )}
-            </section>
-          </main>
-        </div>
+        <main id="main-content" className="main-area" tabIndex={-1}>
+          <section className="editor-panel panel" aria-label="Notebook editor">
+            {activeNote ? (
+              <Editor
+                key={activeNote.id}
+                note={activeNote}
+                settings={settings}
+                now={now}
+                autoFocusTitle={autoFocusTitle}
+                onTitleFocused={() => setFocusTitleNoteId(null)}
+                onTitleChange={updateTitle}
+                onContentChange={updateContent}
+                onFlush={flushSave}
+                onCopy={handleCopy}
+                onDownload={handleDownload}
+                onOpenShortcuts={handleOpenShortcuts}
+              />
+            ) : (
+              <EmptyState
+                hasNotes={notes.length > 0}
+                onCreateNote={handleCreateNote}
+                onOpenShortcuts={handleOpenShortcuts}
+              />
+            )}
+          </section>
+        </main>
       </div>
 
       <SettingsDialog
@@ -506,12 +430,6 @@ function NotebookApp() {
       />
 
       <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
-
-      <DeleteNoteDialog
-        note={deleteTarget}
-        onClose={() => setDeleteTargetId(null)}
-        onConfirm={handleConfirmDelete}
-      />
     </>
   )
 }
