@@ -20,12 +20,12 @@
 ## Architecture
 
 - React 19 + TypeScript + Vite SPA, also packaged as a Tauri v2 Windows app. No backend, network calls, or accounts: all notes and settings live in `localStorage`.
-- `src/App.tsx` owns UI state (top notes bar, dialogs, resolved theme) and global shortcuts. Note state and persistence live in `src/hooks/useNotebook.ts`.
-- Note navigation lives in `src/components/TopNotesPanel.tsx`: a top action bar (below `TopBar`) that holds the New note button, the `#notes-search` field, and a horizontally scrolling strip of note tabs. There is no sidebar and no sidebar open/collapsed state to manage; responsive layout is handled in CSS (`flex-wrap` on small screens).
+- `src/App.tsx` owns UI state (single top bar, dialogs, resolved theme) and global shortcuts. Note state and persistence live in `src/hooks/useNotebook.ts`.
+- The app has one top bar, `src/components/TopBar.tsx` (Windows 11 Notepad style): a horizontally scrolling strip of note tabs with an icon-only white `+` button after the last tab for creating notes, plus the save indicator, theme toggle, and settings button pinned to the right. The separate brand/home bar was removed — `LogoMark.tsx` and `TopNotesPanel.tsx` were deleted and their styles dropped from `index.css`. There is no sidebar, no search field, and no sidebar open/collapsed state to manage; the tab strip scrolls horizontally on narrow windows.
 - `useNotebook` writes immediately for create/select/delete/settings. Title and content edits are debounced by 600 ms (`SAVE_DELAY_MS`) and flushed on blur, `pagehide`, `beforeunload`, and `visibilitychange`. Its `dataRef` is the authoritative snapshot; route edits through its callbacks rather than only calling `setData`, or they won't be saved.
-- Deleting a note is immediate by design: the tab's delete icon calls `deleteNote(id)` directly (App adds a toast) — there is no confirmation dialog, and `DeleteNoteDialog.tsx` was removed on purpose. Only the clicked note's id is passed, so other notes are untouched.
+- Deleting a note is immediate by design: the tab's delete icon calls `deleteNote(id)` directly — there is no confirmation dialog and no toast, and `DeleteNoteDialog.tsx` was removed on purpose. Only the clicked note's id is passed, so other notes are untouched.
 - `src/lib/storage.ts` is the only TypeScript module touching `localStorage`, under the `notebook.io/v1` key. It defensively parses untrusted data and keeps corrupt payloads at `notebook.io/backup/<timestamp>`. Preserve the key and schema for existing users.
-- `persistNotebook` deliberately lets storage/quota errors throw; callers translate them into save status and toasts. Don't swallow them there.
+- `persistNotebook` deliberately lets storage/quota errors throw; callers translate them into save status and the save-error message in the top bar and Settings dialog. Don't swallow them there.
 - `parseSettings` is an allowlist and `persistNotebook` round-trips settings through it: a new `AppSettings` field that isn't added there (and to `DEFAULT_SETTINGS`) is silently dropped on the next save.
 - `src/lib/text.ts` sanitizes editor HTML against a tag allowlist and strips every attribute except validated http(s) links. `plainTextToHtml` escapes imported `.txt` text and preserves line breaks and spacing before it is sanitized and stored. Sanitize any new HTML before storing or injecting it; never render raw note HTML. URL validation lives in `src/lib/links.ts`.
 - `index.html` owns the web startup chrome: an inline pre-paint theme script (reads `notebook.io/v1` directly) so the page never flashes the wrong theme. There is no splash screen or startup animation on web or desktop — keep it that way. Keep the storage key/shape in sync with `src/lib/storage.ts`.
@@ -46,8 +46,8 @@
 
 ## Styling / UX
 
-- Tailwind v4 is imported, but only a few responsive visibility utilities are used. Visual styling lives in `src/index.css` on CSS custom properties, and surfaces share the flat `.panel` style; add styles there in the existing token pattern. The navigation is a horizontal `.notes-bar` above `.main-area`, not a side panel.
-- Keep the UI cheap to render: no `backdrop-filter`, blur, `mix-blend-mode`, looping animations, or large blurred shadows; keep new motion one-shot and respect `prefers-reduced-motion`. `TopBar` is memoized on primitive props and `TopNotesPanel` memoizes each `NoteTab`, so keystrokes don't re-render the navigation; `Editor` defers word-count work (`STATS_DELAY_MS`) off the keystroke path. Keep new per-keystroke work close to zero.
+- Tailwind v4 is imported, but only a few responsive visibility utilities are used. Visual styling lives in `src/index.css` on CSS custom properties, and surfaces share the flat `.panel` style; add styles there in the existing token pattern. The navigation is a horizontal tab strip inside `.topbar` above `.main-area`, not a side panel.
+- Keep the UI cheap to render: no `backdrop-filter`, blur, `mix-blend-mode`, looping animations, or large blurred shadows; keep new motion one-shot and respect `prefers-reduced-motion`. `TopBar` is memoized on primitive props and memoizes each `NoteTab`, so keystrokes don't re-render the navigation; `Editor` defers word-count work (`STATS_DELAY_MS`) off the keystroke path. Keep new per-keystroke work close to zero.
 - Theme is `data-theme="dark|light"` on `<html>`, with tokens in `html[data-theme=...]` blocks. `App.tsx` also syncs `color-scheme`, the `theme-color` meta tag, and the native Tauri title-bar theme. Theme defaults/validation live in `DEFAULT_SETTINGS`/`parseSettings`; the inline script in `index.html` duplicates the theme default and system resolution, so keep them consistent.
 - Reuse `Dialog` (`src/components/Dialog.tsx`) for modals: it supplies the portal, focus trap, Escape handling, and scroll lock. Icons come from `lucide-react`.
 
@@ -57,5 +57,5 @@
 - `erasableSyntaxOnly` is on: no enums, namespaces, or parameter properties.
 - `strict` is not enabled; don't rely on strict null checks, and don't flip it on as a drive-by change.
 - Components are named exports (`export function X`) except `App`. Imports are relative; there are no path aliases.
-- Component files should export components only (`react/only-export-components`). Put shared contexts/constants in separate files like `toast-context.ts`.
+- Component files should export components only (`react/only-export-components`). Put shared contexts/constants in separate files.
 - Style matches the existing source: no semicolons, single quotes, 2-space indent.

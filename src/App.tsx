@@ -1,10 +1,8 @@
 import { isTauri } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Note } from './types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNotebook } from './hooks/useNotebook'
-import { useToast } from './hooks/useToast'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { useNow } from './hooks/useNow'
 import { readTextFile, takePendingTextFiles } from './lib/files'
@@ -16,15 +14,12 @@ import {
   noteTitle,
 } from './lib/utils'
 import { TopBar } from './components/TopBar'
-import { TopNotesPanel } from './components/TopNotesPanel'
 import { Editor } from './components/Editor'
 import { EmptyState } from './components/EmptyState'
 import { SettingsDialog } from './components/SettingsDialog'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
-import { ToastProvider } from './components/ToastProvider'
 
 function NotebookApp() {
-  const { toast } = useToast()
   const {
     notes,
     activeNote,
@@ -32,7 +27,6 @@ function NotebookApp() {
     saveStatus,
     lastSavedAt,
     saveError,
-    loadNotice,
     createNote,
     importNote,
     selectNote,
@@ -50,9 +44,6 @@ function NotebookApp() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [focusTitleNoteId, setFocusTitleNoteId] = useState<string | null>(null)
 
-  const loadNoticeShown = useRef(false)
-  const previousSaveError = useRef<string | null>(null)
-
   const openPendingTextFiles = useCallback(async (): Promise<boolean> => {
     let paths: string[]
     try {
@@ -67,24 +58,13 @@ function NotebookApp() {
         const file = await readTextFile(path)
         importNote(file.name, plainTextToHtml(file.content))
         opened = true
-        toast({
-          message: 'Text file opened',
-          description: file.fileName,
-          tone: 'success',
-          duration: 2400,
-        })
-      } catch (error) {
-        toast({
-          message: 'Could not open text file',
-          description: error instanceof Error ? error.message : String(error),
-          tone: 'error',
-          duration: 8000,
-        })
+      } catch {
+        // Silently ignore files that cannot be opened.
       }
     }
 
     return opened
-  }, [importNote, toast])
+  }, [importNote])
 
   const resolvedTheme =
     settings.theme === 'system' ? (prefersDark ? 'dark' : 'light') : settings.theme
@@ -153,47 +133,6 @@ function NotebookApp() {
       : 'Notebook.io — A quiet place to write'
   }, [activeNoteHeading])
 
-  useEffect(() => {
-    if (!loadNotice || loadNoticeShown.current) return
-    loadNoticeShown.current = true
-    toast({
-      message: 'A note about local storage',
-      description: loadNotice,
-      tone: 'error',
-      duration: 10000,
-    })
-  }, [loadNotice, toast])
-
-  useEffect(() => {
-    if (saveError && saveError !== previousSaveError.current) {
-      previousSaveError.current = saveError
-      toast({
-        message: 'Changes could not be saved',
-        description: saveError,
-        tone: 'error',
-        duration: 10000,
-        action: {
-          label: 'Try again',
-          onClick: () => {
-            flushSave()
-          },
-        },
-      })
-    } else if (!saveError) {
-      previousSaveError.current = null
-    }
-  }, [flushSave, saveError, toast])
-
-  const focusSearch = useCallback(() => {
-    // The search field lives in the always-visible top bar, so it can be
-    // focused immediately without waiting for a frame.
-    const input = document.getElementById('notes-search')
-    if (input instanceof HTMLInputElement) {
-      input.focus()
-      input.select()
-    }
-  }, [])
-
   const handleCreateNote = useCallback(() => {
     setFocusTitleNoteId(createNote())
   }, [createNote])
@@ -214,21 +153,9 @@ function NotebookApp() {
     [selectNote],
   )
 
-  // Deletion is immediate: no confirmation dialog, and only the clicked note
-  // is removed from the notebook.
-  const handleDeleteNote = useCallback(
-    (note: Note) => {
-      const title = noteTitle(note)
-      deleteNote(note.id)
-      toast({
-        message: 'Note deleted',
-        description: `“${title}” was removed from this device.`,
-        tone: 'info',
-        duration: 3200,
-      })
-    },
-    [deleteNote, toast],
-  )
+  const handleTitleFocused = useCallback(() => {
+    setFocusTitleNoteId(null)
+  }, [])
 
   const handleToggleTheme = useCallback(() => {
     updateSettings({ theme: resolvedTheme === 'dark' ? 'light' : 'dark' })
@@ -237,59 +164,28 @@ function NotebookApp() {
   const handleCopy = useCallback(async () => {
     if (!activeNote) return
     if (!htmlToPlainText(activeNote.content).trim()) {
-      toast({
-        message: 'This note is empty',
-        description: 'Write something before copying it.',
-        tone: 'info',
-      })
       return
     }
 
     try {
       await copyNoteToClipboard(activeNote)
-      toast({
-        message: 'Copied to clipboard',
-        description: 'Formatting is preserved where your clipboard supports it.',
-        tone: 'success',
-      })
-    } catch (error) {
-      toast({
-        message: 'Could not copy this note',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Clipboard access was blocked by the system.',
-        tone: 'error',
-      })
+    } catch {
+      // Clipboard access can be blocked; the note stays unchanged.
     }
-  }, [activeNote, toast])
+  }, [activeNote])
 
   const handleDownload = useCallback(() => {
     if (!activeNote) return
     if (!htmlToPlainText(activeNote.content).trim()) {
-      toast({
-        message: 'This note is empty',
-        description: 'Write something before downloading it.',
-        tone: 'info',
-      })
       return
     }
 
     try {
-      const filename = downloadNoteAsText(activeNote)
-      toast({
-        message: 'Note downloaded',
-        description: filename,
-        tone: 'success',
-      })
+      downloadNoteAsText(activeNote)
     } catch {
-      toast({
-        message: 'Could not download this note',
-        description: 'The download was blocked by the system. Please try again.',
-        tone: 'error',
-      })
+      // The browser can block downloads; the note stays unchanged.
     }
-  }, [activeNote, toast])
+  }, [activeNote])
 
   const handleOpenSettings = useCallback(() => {
     setSettingsOpen(true)
@@ -306,12 +202,7 @@ function NotebookApp() {
       lineSpacing: DEFAULT_SETTINGS.lineSpacing,
       spellcheck: DEFAULT_SETTINGS.spellcheck,
     })
-    toast({
-      message: 'Editor preferences restored',
-      tone: 'success',
-      duration: 2800,
-    })
-  }, [toast, updateSettings])
+  }, [updateSettings])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -321,27 +212,13 @@ function NotebookApp() {
 
       if (key === 's' && !event.altKey && !event.shiftKey) {
         event.preventDefault()
-        const saved = flushSave()
-        if (saved && activeNote) {
-          toast({
-            message: 'Note saved',
-            description: 'Stored on this device.',
-            tone: 'success',
-            duration: 2600,
-          })
-        }
+        flushSave()
         return
       }
 
       if (key === 'n' && event.altKey && !event.shiftKey) {
         event.preventDefault()
         if (!event.repeat) handleCreateNote()
-        return
-      }
-
-      if (key === 'k' && !event.altKey && !event.shiftKey) {
-        event.preventDefault()
-        focusSearch()
         return
       }
 
@@ -354,13 +231,10 @@ function NotebookApp() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
-    activeNote,
     dialogOpen,
     flushSave,
-    focusSearch,
     handleCreateNote,
     handleOpenShortcuts,
-    toast,
   ])
 
   return (
@@ -371,23 +245,19 @@ function NotebookApp() {
 
       <div className="app-shell">
         <TopBar
-          hasNote={activeNote !== null}
+          notes={notes}
+          activeNoteId={activeNote?.id ?? null}
+          now={now}
           saveStatus={saveStatus}
           saveError={saveError}
           lastSavedAt={lastSavedAt}
           resolvedTheme={resolvedTheme}
-          onToggleTheme={handleToggleTheme}
-          onOpenSettings={handleOpenSettings}
-        />
-
-        <TopNotesPanel
-          notes={notes}
-          activeNoteId={activeNote?.id ?? null}
-          now={now}
           onCreateNote={handleCreateNote}
           onSelectNote={handleSelectNote}
           onRenameNote={handleRenameNote}
-          onDeleteNote={handleDeleteNote}
+          onDeleteNote={deleteNote}
+          onToggleTheme={handleToggleTheme}
+          onOpenSettings={handleOpenSettings}
         />
 
         <main id="main-content" className="main-area" tabIndex={-1}>
@@ -399,7 +269,7 @@ function NotebookApp() {
                 settings={settings}
                 now={now}
                 autoFocusTitle={autoFocusTitle}
-                onTitleFocused={() => setFocusTitleNoteId(null)}
+                onTitleFocused={handleTitleFocused}
                 onTitleChange={updateTitle}
                 onContentChange={updateContent}
                 onFlush={flushSave}
@@ -435,9 +305,5 @@ function NotebookApp() {
 }
 
 export default function App() {
-  return (
-    <ToastProvider>
-      <NotebookApp />
-    </ToastProvider>
-  )
+  return <NotebookApp />
 }

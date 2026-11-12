@@ -30,7 +30,6 @@ const groups: Array<{ title: string; shortcuts: Shortcut[] }> = [
     shortcuts: [
       { label: 'Save now', keys: formatShortcut('S') },
       { label: 'New note', keys: formatShortcut('N', { alt: true }) },
-      { label: 'Search notes', keys: formatShortcut('K') },
       { label: 'Keyboard shortcuts', keys: formatShortcut('/') },
       { label: 'Close a dialog', keys: 'Esc' },
     ],

@@ -16,9 +16,11 @@ automatically on your device — there are no accounts, no servers, and no sync.
   native Windows app. Both work without a network connection.
 - **Automatic local saves** after a short pause, when a note is blurred, and
   before the tab closes. A save indicator in the top bar shows the current state.
-- **Note management** in a top action bar (Windows 11 Notepad style): a prominent
-  New note button, search, and horizontally scrolling note tabs for switching,
-  renaming, and deleting — deletes happen instantly, with no confirmation dialog.
+- **Note management** in one simple top bar (Windows 11 Notepad style): horizontally
+  scrolling note tabs for switching, renaming, and deleting, plus a white **+**
+  after the last tab to create a note — deletes happen instantly, with no
+  confirmation dialog. The save indicator, theme toggle, and settings button
+  live in the same bar; there is no separate brand bar.
 - **Rich text** via the formatting toolbar and keyboard shortcuts: bold, italic,
   underline, H1/H2/paragraph styles, bulleted lists, and numbered lists.
 - **Clickable links** — pasted http(s) or `www.` URLs become blue links that open
@@ -166,7 +168,6 @@ npm run lint
 | -------------------- | ------------------------------- |
 | Save now             | `Ctrl/Cmd + S`                  |
 | New note             | `Ctrl/Cmd + Alt + N`            |
-| Search notes         | `Ctrl/Cmd + K`                  |
 | Bold                 | `Ctrl/Cmd + B`                  |
 | Italic               | `Ctrl/Cmd + I`                  |
 | Underline            | `Ctrl/Cmd + U`                  |

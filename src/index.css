@@ -55,9 +55,6 @@ html[data-theme="dark"] {
   --tooltip-bg: #1b1b1f;
   --tooltip-fg: #f2f0eb;
   --tooltip-border: rgba(255, 255, 255, 0.11);
-  --logo-tile-top: #f6f3eb;
-  --logo-tile-bottom: #d9d2c3;
-  --logo-ink: #171715;
   --switch-track: rgba(255, 255, 255, 0.14);
   --switch-on: #e9e5da;
   --switch-thumb: #0d0d0f;
@@ -105,9 +102,6 @@ html[data-theme="light"] {
   --tooltip-bg: #1c1c1f;
   --tooltip-fg: #f7f5ef;
   --tooltip-border: rgba(255, 255, 255, 0.13);
-  --logo-tile-top: #232326;
-  --logo-tile-bottom: #101012;
-  --logo-ink: #f5f1e7;
   --switch-track: rgba(22, 22, 26, 0.17);
   --switch-on: #1a1a1d;
   --switch-thumb: #fcfbf7;
@@ -216,19 +210,19 @@ a {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
   min-height: 52px;
   padding: 0 8px;
   border-radius: 15px;
 }
 
-.topbar-left {
+/* Right group: the auto margin pins save state and actions to the end. */
+.topbar-right {
   display: flex;
-  flex: 1;
+  flex-shrink: 0;
   align-items: center;
-  gap: 7px;
-  min-width: 0;
+  gap: 5px;
+  margin-left: auto;
 }
 
 .topbar-actions {
@@ -236,48 +230,6 @@ a {
   flex-shrink: 0;
   align-items: center;
   gap: 1px;
-}
-
-.brand {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-}
-
-.brand-name {
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  white-space: nowrap;
-}
-
-.brand-name span {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.logo-mark {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  flex-shrink: 0;
-  place-items: center;
-  color: var(--logo-ink);
-  background: linear-gradient(145deg, var(--logo-tile-top), var(--logo-tile-bottom));
-  border: 1px solid var(--line-strong);
-  border-radius: 9px;
-  transition: transform 160ms var(--ease-out);
-}
-
-.logo-mark svg {
-  width: 15px;
-  height: 15px;
-}
-
-.brand:hover .logo-mark {
-  transform: rotate(-4deg) scale(1.03);
 }
 
 .save-indicator {
@@ -529,160 +481,34 @@ a {
 /* Notes bar (top navigation)                                          */
 /* ------------------------------------------------------------------ */
 
-.notes-bar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 10px;
-  min-height: 48px;
-  padding: 7px;
-  border-radius: 15px;
-}
-
-.notes-bar-start {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 7px;
-}
-
-.notes-search {
-  width: 186px;
+/* The icon-only new-note control sits after the last tab, like a browser. */
+.new-note-tab {
+  display: grid;
+  width: 32px;
   height: 32px;
   flex-shrink: 0;
-}
-
-.notes-bar-count {
-  display: inline-flex;
-  min-width: 22px;
-  height: 21px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-  color: var(--text-faint);
-  font-size: 10px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  background: var(--input-bg);
-  border: 1px solid var(--line);
-  border-radius: 99px;
-}
-
-.new-note-button {
-  display: flex;
-  min-height: 32px;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 0 12px;
-  color: var(--button-primary-fg);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  background: var(--button-primary-bg);
+  place-items: center;
+  color: var(--text-strong);
+  background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
   transition:
-    background-color 180ms var(--ease-soft),
+    background-color 150ms var(--ease-soft),
+    color 150ms var(--ease-soft),
     transform 160ms var(--ease-out);
 }
 
-.new-note-button:hover {
-  background: var(--button-primary-bg-hover);
-  transform: translateY(-1px);
-}
-
-.new-note-button:active {
-  transform: scale(0.985);
-}
-
-.search-field {
-  position: relative;
-  display: flex;
-  height: 34px;
-  align-items: center;
-  background: var(--input-bg);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  transition:
-    background-color 180ms var(--ease-soft),
-    border-color 180ms var(--ease-soft),
-    box-shadow 180ms var(--ease-soft);
-}
-
-.search-field:focus-within {
-  background: var(--input-focus-bg);
-  border-color: var(--line-strong);
-  box-shadow: 0 0 0 2px var(--focus-soft);
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  color: var(--text-faint);
-  pointer-events: none;
-}
-
-.search-field input {
-  width: 100%;
-  height: 100%;
-  padding: 0 52px 0 31px;
-  color: var(--text-primary);
-  font-size: 11.5px;
-  background: transparent;
-  border: 0;
-  border-radius: 9px;
-}
-
-.search-field input::placeholder {
-  color: var(--text-faint);
-}
-
-.search-field input:focus-visible {
-  outline: none;
-}
-
-.search-field input::-webkit-search-cancel-button {
-  display: none;
-}
-
-.search-shortcut {
-  position: absolute;
-  right: 8px;
-  padding: 1px 5px;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  line-height: 1.5;
-  background: var(--input-bg);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.search-clear {
-  position: absolute;
-  right: 5px;
-  display: grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-}
-
-.search-clear:hover {
-  color: var(--text-primary);
+.new-note-tab:hover {
   background: var(--hover);
+}
+
+.new-note-tab:active {
+  transform: scale(0.94);
 }
 
 .notes-tabs {
   display: flex;
-  flex: 1;
+  flex: 0 1 auto;
   gap: 6px;
   min-width: 0;
   padding: 2px;
@@ -705,12 +531,6 @@ a {
 .notes-bar-empty strong {
   color: var(--text-muted);
   font-weight: 600;
-}
-
-.notes-bar-empty .text-button {
-  display: inline-flex;
-  margin-left: 4px;
-  font-size: 11px;
 }
 
 .note-tab {
@@ -1869,147 +1689,6 @@ a {
   margin-top: 20px;
 }
 
-.confirm-copy {
-  margin: 0 0 12px;
-  color: var(--text-secondary);
-  font-size: 11.5px;
-  line-height: 1.6;
-}
-
-.confirm-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 11px;
-  background: var(--input-bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.confirm-note-icon {
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
-.confirm-note-title {
-  overflow: hidden;
-  color: var(--text-primary);
-  font-size: 11.5px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ------------------------------------------------------------------ */
-/* Toasts                                                              */
-/* ------------------------------------------------------------------ */
-
-.toast-viewport {
-  position: fixed;
-  bottom: max(16px, env(safe-area-inset-bottom));
-  left: 50%;
-  z-index: 90;
-  display: flex;
-  width: min(calc(100vw - 24px), 416px);
-  flex-direction: column;
-  align-items: stretch;
-  gap: 7px;
-  pointer-events: none;
-  transform: translateX(-50%);
-}
-
-.toast {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  width: 100%;
-  padding: 10px 9px 10px 11px;
-  pointer-events: auto;
-  background: var(--panel-raised);
-  border: 1px solid var(--line-strong);
-  border-radius: 11px;
-}
-
-.toast-icon {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  place-items: center;
-  color: var(--text-secondary);
-  background: var(--input-bg);
-  border: 1px solid var(--line);
-  border-radius: 7px;
-}
-
-.toast[data-tone="success"] .toast-icon {
-  color: var(--success);
-  background: color-mix(in srgb, var(--success) 9%, transparent);
-  border-color: color-mix(in srgb, var(--success) 20%, transparent);
-}
-
-.toast[data-tone="error"] .toast-icon {
-  color: var(--danger);
-  background: var(--danger-bg);
-  border-color: var(--danger-border);
-}
-
-.toast-copy {
-  flex: 1;
-  min-width: 0;
-  padding-top: 1px;
-}
-
-.toast-message {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 11.5px;
-  font-weight: 500;
-  line-height: 1.45;
-}
-
-.toast-description {
-  margin: 3px 0 0;
-  color: var(--text-muted);
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-.toast-action {
-  align-self: center;
-  height: 26px;
-  flex-shrink: 0;
-  padding: 0 8px;
-  color: var(--text-primary);
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--active);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  transition: background-color 150ms var(--ease-soft);
-}
-
-.toast-action:hover {
-  background: var(--line-strong);
-}
-
-.toast-close {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  place-items: center;
-  color: var(--text-faint);
-  background: transparent;
-  border: 0;
-  border-radius: 5px;
-}
-
-.toast-close:hover {
-  color: var(--text-primary);
-  background: var(--hover);
-}
-
 /* ------------------------------------------------------------------ */
 /* Focus, scroll styling and misc                                     */
 /* ------------------------------------------------------------------ */
@@ -2073,10 +1752,6 @@ select:focus-visible,
   outline-offset: 2px;
 }
 
-.search-field input:focus-visible {
-  outline: none;
-}
-
 .range-input:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 5px;
@@ -2114,11 +1789,7 @@ select:focus-visible,
 
   .topbar {
     min-height: 56px;
-    padding: 0 10px 0 12px;
-  }
-
-  .topbar-left {
-    gap: 9px;
+    padding: 0 10px;
   }
 
   .save-indicator {
@@ -2161,7 +1832,7 @@ select:focus-visible,
 
   .topbar {
     min-height: 58px;
-    padding: 0 11px 0 14px;
+    padding: 0 12px;
   }
 
   .main-area {
@@ -2174,10 +1845,6 @@ select:focus-visible,
 }
 
 @media (max-width: 1023px) {
-  .notes-search {
-    width: 150px;
-  }
-
   .editor-page {
     padding-top: clamp(26px, 5.4vh, 46px);
   }
@@ -2190,40 +1857,6 @@ select:focus-visible,
 
   .topbar {
     min-height: 49px;
-  }
-
-  .brand {
-    gap: 7px;
-  }
-
-  .logo-mark {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-  }
-
-  .brand-name {
-    font-size: 12.5px;
-  }
-
-  .notes-bar {
-    flex-wrap: wrap;
-    row-gap: 6px;
-  }
-
-  .notes-bar-start {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .notes-search {
-    width: auto;
-    min-width: 118px;
-    flex: 1;
-  }
-
-  .notes-tabs {
-    flex: 1 1 100%;
   }
 
   .save-indicator {
@@ -2346,15 +1979,6 @@ select:focus-visible,
     margin-top: 20px;
     font-size: 8.5px;
   }
-
-  .toast-viewport {
-    width: calc(100vw - 20px);
-  }
-
-  .toast {
-    padding: 9px;
-    border-radius: 10px;
-  }
 }
 
 @media (max-width: 379px) {
@@ -2367,10 +1991,6 @@ select:focus-visible,
   }
 
   .editor-stats .stats-divider {
-    display: none;
-  }
-
-  .brand-name {
     display: none;
   }
 
